@@ -180,7 +180,7 @@ struct VulkanWindow
 			CreateInfo.pNext = nullptr;
 			CreateInfo.flags = 0;
 			CreateInfo.pApplicationInfo = &AppInfo;
-			CreateInfo.enabledExtensionCount = InstanceExtensionNames.size();
+			CreateInfo.enabledExtensionCount = InstanceExtensionNames.size()//; <--------------------------
 			CreateInfo.ppEnabledExtensionNames = InstanceExtensionNames.data();
 			if (UseValidation)
 			{
