@@ -1,141 +1,11 @@
-
 #include <SDL.h>
 #include <SDL_vulkan.h>
 #include <vulkan/vulkan_core.h>
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <string>
-
-
-bool HandleVkResult(VkResult Result, const char* FunctionName)
-{
-	if (Result == VK_SUCCESS)
-	{
-		return false;
-	}
-	std::cout << "" << FunctionName << " failed with error code ";
-	switch (Result)
-	{
-	case VK_NOT_READY:
-		std::cout << "VK_NOT_READY";
-		break;
-	case VK_TIMEOUT:
-		std::cout << "VK_TIMEOUT";
-		break;
-	case VK_EVENT_SET:
-		std::cout << "VK_EVENT_SET";
-		break;
-	case VK_EVENT_RESET:
-		std::cout << "VK_EVENT_RESET";
-		break;
-	case VK_INCOMPLETE:
-		std::cout << "VK_INCOMPLETE";
-		break;
-	case VK_ERROR_OUT_OF_HOST_MEMORY:
-		std::cout << "VK_ERROR_OUT_OF_HOST_MEMORY";
-		break;
-	case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-		std::cout << "VK_ERROR_OUT_OF_DEVICE_MEMORY";
-		break;
-	case VK_ERROR_INITIALIZATION_FAILED:
-		std::cout << "VK_ERROR_INITIALIZATION_FAILED";
-		break;
-	case VK_ERROR_DEVICE_LOST:
-		std::cout << "VK_ERROR_DEVICE_LOST";
-		break;
-	case VK_ERROR_MEMORY_MAP_FAILED:
-		std::cout << "VK_ERROR_MEMORY_MAP_FAILED";
-		break;
-	case VK_ERROR_LAYER_NOT_PRESENT:
-		std::cout << "VK_ERROR_LAYER_NOT_PRESENT";
-		break;
-	case VK_ERROR_EXTENSION_NOT_PRESENT:
-		std::cout << "VK_ERROR_EXTENSION_NOT_PRESENT";
-		break;
-	case VK_ERROR_FEATURE_NOT_PRESENT:
-		std::cout << "VK_ERROR_FEATURE_NOT_PRESENT";
-		break;
-	case VK_ERROR_INCOMPATIBLE_DRIVER:
-		std::cout << "VK_ERROR_INCOMPATIBLE_DRIVER";
-		break;
-	case VK_ERROR_TOO_MANY_OBJECTS:
-		std::cout << "VK_ERROR_TOO_MANY_OBJECTS";
-		break;
-	case VK_ERROR_FORMAT_NOT_SUPPORTED:
-		std::cout << "VK_ERROR_FORMAT_NOT_SUPPORTED";
-		break;
-	case VK_ERROR_FRAGMENTED_POOL:
-		std::cout << "VK_ERROR_FRAGMENTED_POOL";
-		break;
-	case VK_ERROR_UNKNOWN:
-		std::cout << "VK_ERROR_UNKNOWN";
-		break;
-	case VK_ERROR_OUT_OF_POOL_MEMORY:
-		std::cout << "VK_ERROR_OUT_OF_POOL_MEMORY";
-		break;
-	case VK_ERROR_INVALID_EXTERNAL_HANDLE:
-		std::cout << "VK_ERROR_INVALID_EXTERNAL_HANDLE";
-		break;
-	case VK_ERROR_FRAGMENTATION:
-		std::cout << "VK_ERROR_FRAGMENTATION";
-		break;
-	case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS:
-		std::cout << "VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS";
-		break;
-	case VK_ERROR_SURFACE_LOST_KHR:
-		std::cout << "VK_ERROR_SURFACE_LOST_KHR";
-		break;
-	case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
-		std::cout << "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR";
-		break;
-	case VK_SUBOPTIMAL_KHR:
-		std::cout << "VK_SUBOPTIMAL_KHR";
-		break;
-	case VK_ERROR_OUT_OF_DATE_KHR:
-		std::cout << "VK_ERROR_OUT_OF_DATE_KHR";
-		break;
-	case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
-		std::cout << "VK_ERROR_INCOMPATIBLE_DISPLAY_KHR";
-		break;
-	case VK_ERROR_VALIDATION_FAILED_EXT:
-		std::cout << "VK_ERROR_VALIDATION_FAILED_EXT";
-		break;
-	case VK_ERROR_INVALID_SHADER_NV:
-		std::cout << "VK_ERROR_INVALID_SHADER_NV";
-		break;
-	case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT:
-		std::cout << "VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT";
-		break;
-	case VK_ERROR_NOT_PERMITTED_EXT:
-		std::cout << "VK_ERROR_NOT_PERMITTED_EXT";
-		break;
-	case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
-		std::cout << "VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT";
-		break;
-	case VK_THREAD_IDLE_KHR:
-		std::cout << "VK_THREAD_IDLE_KHR";
-		break;
-	case VK_THREAD_DONE_KHR:
-		std::cout << "VK_THREAD_DONE_KHR";
-		break;
-	case VK_OPERATION_DEFERRED_KHR:
-		std::cout << "VK_OPERATION_DEFERRED_KHR";
-		break;
-	case VK_OPERATION_NOT_DEFERRED_KHR:
-		std::cout << "VK_OPERATION_NOT_DEFERRED_KHR";
-		break;
-	case VK_PIPELINE_COMPILE_REQUIRED_EXT:
-		std::cout << "VK_PIPELINE_COMPILE_REQUIRED_EXT";
-		break;
-	default:
-		std::cout << int32_t(Result);
-	}
-	std::cout << "\n";
-	return true;
-}
-
-
-#define CHECK_RESULT(vkCall, ...) HandleVkResult(vkCall(__VA_ARGS__), #vkCall)
+#include "error_codes.hpp"
 
 
 struct VulkanWindow
@@ -192,12 +62,56 @@ struct VulkanWindow
 				CreateInfo.enabledLayerCount = 0;
 				CreateInfo.ppEnabledLayerNames = nullptr;
 			}
-			if (CHECK_RESULT(vkCreateInstance, &CreateInfo, nullptr, &Instance))
+			if (FAILED(vkCreateInstance, &CreateInfo, nullptr, &Instance))
 			{
 				Instance = VK_NULL_HANDLE;
 			}
 		}
+
 		if (Instance != VK_NULL_HANDLE)
+		{
+			std::vector<VkPhysicalDevice> Adapters;
+			{
+				uint32_t AdapterCount = 0;
+				vkEnumeratePhysicalDevices(Instance, &AdapterCount, nullptr);
+				Adapters.resize(AdapterCount);
+				vkEnumeratePhysicalDevices(Instance, &AdapterCount, Adapters.data());
+			}
+			if (Adapters.size() == 0)
+			{
+				std::cout << "No GPUs found.\n";
+			}
+			else
+			{
+				// Use the first available discrete adapter.
+				for (VkPhysicalDevice& Candidate : Adapters)
+				{
+					vkGetPhysicalDeviceProperties(Candidate, &AdapterProperties);
+					if (AdapterProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+					{
+						Adapter = Candidate;
+						goto FoundAdapter;
+					}
+				}
+				// Or the first available integrated adapter.
+				for (VkPhysicalDevice& Candidate : Adapters)
+				{
+					vkGetPhysicalDeviceProperties(Candidate, &AdapterProperties);
+					if (AdapterProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+					{
+						Adapter = Candidate;
+						goto FoundAdapter;
+					}
+				}
+				// Yolo.
+				Adapter = Adapters[0];
+				vkGetPhysicalDeviceProperties(Adapter, &AdapterProperties);
+			FoundAdapter:
+				vkGetPhysicalDeviceMemoryProperties(Adapter, &AdapterMemoryProperties);
+			}
+		}
+
+		if (Adapter != VK_NULL_HANDLE)
 		{
 			if (!SDL_Vulkan_CreateSurface(Window, Instance, &Surface))
 			{
@@ -205,13 +119,125 @@ struct VulkanWindow
 				std::cout << "Failed to create window surface.\n";
 			}
 		}
+
+		if (Surface != VK_NULL_HANDLE)
+		{
+			std::vector<VkSurfaceFormatKHR> SurfaceFormats;
+			{
+				uint32_t SurfaceFormatCount;
+				vkGetPhysicalDeviceSurfaceFormatsKHR(Adapter, Surface, &SurfaceFormatCount, nullptr);
+				SurfaceFormats.resize(SurfaceFormatCount);
+				vkGetPhysicalDeviceSurfaceFormatsKHR(Adapter, Surface, &SurfaceFormatCount, SurfaceFormats.data());
+				SurfaceFormat = SurfaceFormats[0];
+			}
+			std::vector<VkQueueFamilyProperties> QueueFamilies;
+			{
+				uint32_t QueueFamilyCount = 0;
+				vkGetPhysicalDeviceQueueFamilyProperties(Adapter, &QueueFamilyCount, nullptr);
+				QueueFamilies.resize(QueueFamilyCount);
+				vkGetPhysicalDeviceQueueFamilyProperties(Adapter, &QueueFamilyCount, QueueFamilies.data());
+			}
+			for (uint32_t i = 0; i < QueueFamilies.size(); ++i)
+			{
+				VkQueueFamilyProperties& QueueFamily = QueueFamilies[i];
+				VkBool32 SupportsPresent;
+				vkGetPhysicalDeviceSurfaceSupportKHR(Adapter, i, Surface, &SupportsPresent);
+				const uint32_t Match = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
+				if ((QueueFamily.queueFlags & Match) == Match && SupportsPresent)
+				{
+					QueueFamilyIndex = i;
+					break;
+				}
+			}
+		}
+
+		if (QueueFamilyIndex != -1)
+		{
+			float QueuePriority = 0.0;
+			VkDeviceQueueCreateInfo QueueInfo;
+			QueueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			QueueInfo.pNext = nullptr;
+			QueueInfo.flags = 0;
+			QueueInfo.queueFamilyIndex = QueueFamilyIndex;
+			QueueInfo.queueCount = 1;
+			QueueInfo.pQueuePriorities = &QueuePriority;
+
+			std::vector<const char*> DeviceExtensions;
+			DeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+			VkDeviceCreateInfo DeviceInfo;
+			DeviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+			DeviceInfo.pNext = nullptr;
+			DeviceInfo.flags = 0;
+			DeviceInfo.queueCreateInfoCount = 1;
+			DeviceInfo.pQueueCreateInfos = &QueueInfo;
+			DeviceInfo.enabledExtensionCount = uint32_t(DeviceExtensions.size());
+			DeviceInfo.ppEnabledExtensionNames = DeviceExtensions.data();
+			DeviceInfo.enabledLayerCount = 0;
+			DeviceInfo.ppEnabledLayerNames = nullptr;
+			DeviceInfo.pEnabledFeatures = nullptr;
+			if (FAILED(vkCreateDevice, Adapter, &DeviceInfo, nullptr, &Device))
+			{
+				Device = VK_NULL_HANDLE;
+			}
+		}
+
+		if (Device != VK_NULL_HANDLE)
+		{
+			vkGetDeviceQueue(Device, uint32_t(QueueFamilyIndex), 0, &GraphicsQueue);
+			SwapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+			SwapchainCreateInfo.pNext = nullptr;
+			SwapchainCreateInfo.flags = 0;
+			SwapchainCreateInfo.surface = Surface;
+			SwapchainCreateInfo.minImageCount = 2;
+			SwapchainCreateInfo.imageFormat = SurfaceFormat.format;
+			SwapchainCreateInfo.imageColorSpace = SurfaceFormat.colorSpace;
+			SwapchainCreateInfo.imageExtent.width = Width;
+			SwapchainCreateInfo.imageExtent.height = Height;
+			SwapchainCreateInfo.imageArrayLayers = 1;
+			SwapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+			SwapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			SwapchainCreateInfo.queueFamilyIndexCount = 1;
+			SwapchainCreateInfo.pQueueFamilyIndices = (uint32_t*)&QueueFamilyIndex;
+			SwapchainCreateInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+			SwapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+			SwapchainCreateInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+			SwapchainCreateInfo.clipped = true;
+			SwapchainCreateInfo.oldSwapchain = nullptr;
+			if (FAILED(vkCreateSwapchainKHR, Device, &SwapchainCreateInfo, nullptr, &Swapchain))
+			{
+				Swapchain = VK_NULL_HANDLE;
+			}
+		}
+
+		if (Swapchain != VK_NULL_HANDLE)
+		{
+			{
+				uint32_t SwapchainCount = 0;
+				vkGetSwapchainImagesKHR(Device, Swapchain, &SwapchainCount, nullptr);
+				SwapchainImages.resize(SwapchainCount);
+				vkGetSwapchainImagesKHR(Device, Swapchain, &SwapchainCount, SwapchainImages.data());
+			}
+		}
+	}
+	bool Ready()
+	{
+		return Swapchain != VK_NULL_HANDLE && GraphicsQueue != VK_NULL_HANDLE;
 	}
 	bool PumpEvents()
 	{
-		return !SDL_QuitRequested();
+		return Ready() && !SDL_QuitRequested();
 	}
 	virtual ~VulkanWindow()
 	{
+		if (Swapchain != VK_NULL_HANDLE)
+		{
+			vkDestroySwapchainKHR(Device, Swapchain, nullptr);
+		}
+		if (Device != VK_NULL_HANDLE)
+		{
+			vkDestroyDevice(Device, nullptr);
+		}
 		if (Surface != VK_NULL_HANDLE)
 		{
 			vkDestroySurfaceKHR(Instance, Surface, nullptr);
@@ -226,8 +252,20 @@ struct VulkanWindow
 		}
 		SDL_Quit();
 	}
+
 	SDL_Window* Window = nullptr;
 	VkInstance Instance = VK_NULL_HANDLE;
 	VkSurfaceKHR Surface = VK_NULL_HANDLE;
 	VkSurfaceFormatKHR SurfaceFormat;
+
+	VkPhysicalDevice Adapter = VK_NULL_HANDLE;
+	VkPhysicalDeviceProperties AdapterProperties;
+	VkPhysicalDeviceMemoryProperties AdapterMemoryProperties;
+	VkDevice Device = VK_NULL_HANDLE;
+	int32_t QueueFamilyIndex = -1;
+	VkQueue GraphicsQueue = VK_NULL_HANDLE;
+
+	VkSwapchainCreateInfoKHR SwapchainCreateInfo;
+	VkSwapchainKHR Swapchain = VK_NULL_HANDLE;
+	std::vector<VkImage> SwapchainImages;
 };
