@@ -22,6 +22,14 @@ TODO!
 ## Windows + Clang
 TODO?
 
+## Windows + MSBuild Tools 2017
+ 1. Install [MSBuild Tools 2017](https://aka.ms/vs/15/release/vs_buildtools.exe) with the following:
+    * Workload `Visual C++ build tools`
+ 2. Install [Python 3](https://www.python.org/downloads/), and add it to PATH
+ 3. Install [cppyy](https://cppyy.readthedocs.io/en/latest/installation.html)
+
+Now you can run the project via `python hail_eris.py`!
+
 ## Windows + Visual Studio 2017
  1. Install Visual Studio 2017 with the following:
     * Workload `Desktop development with C++`
