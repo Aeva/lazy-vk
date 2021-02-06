@@ -7,8 +7,9 @@ or [dynamically interpreted in python](#instructions-for-the-magic-python-varian
 # Instructions for the Ordinary Compiled C++ Variant
 ## Windows + Clang 11.0.0
 
- 1. Install [clang 11.0.0](https://releases.llvm.org/download.html).
- 2. Install the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/)
+ 1. Install Visual Studio / MSBuild Tools / Whatever
+ 2. Install [clang 11.0.0](https://releases.llvm.org/download.html), and add it to PATH
+ 3. Install the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/)
 
 Now you can compile the project with `build.bat` and run it via `hail_eris.exe`!
 
