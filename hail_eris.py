@@ -8,7 +8,7 @@ cppyy.load_library("SDL2.dll")
 cppyy.load_library("vulkan-1")
 cppyy.add_include_path("external")
 cppyy.add_include_path("external/SDL2-2.0.14/include")
-cppyy.include("hail_eris.hpp")
+cppyy.include("vulkan_window.hpp")
 cpp = cppyy.gbl
 
 

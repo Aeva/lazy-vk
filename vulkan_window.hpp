@@ -218,18 +218,93 @@ struct VulkanWindow
 				SwapchainImages.resize(SwapchainCount);
 				vkGetSwapchainImagesKHR(Device, Swapchain, &SwapchainCount, SwapchainImages.data());
 			}
+			for (VkImage& SwapchainImage : SwapchainImages)
+			{
+				{
+					VkImageViewCreateInfo CreateInfo = {};
+					CreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+					CreateInfo.pNext = nullptr;
+					CreateInfo.flags = 0;
+					CreateInfo.image = SwapchainImage;
+					CreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+					CreateInfo.format = SurfaceFormat.format;
+					CreateInfo.components = { VK_COMPONENT_SWIZZLE_IDENTITY };
+					CreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+					CreateInfo.subresourceRange.baseMipLevel = 0;
+					CreateInfo.subresourceRange.levelCount = 1;
+					CreateInfo.subresourceRange.baseArrayLayer = 0;
+					CreateInfo.subresourceRange.layerCount = 1;
+					VkImageView SwapchainView;
+					vkCreateImageView(Device, &CreateInfo, nullptr, &SwapchainView);
+					SwapchainViews.push_back(SwapchainView);
+				}
+				{
+					VkCommandPoolCreateInfo CreateInfo = {};
+					CreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+					CreateInfo.pNext = nullptr;
+					CreateInfo.queueFamilyIndex = QueueFamilyIndex;
+					CreateInfo.flags = 0;
+					VkCommandPool CommandPool;
+					vkCreateCommandPool(Device, &CreateInfo, nullptr, &CommandPool);
+					CommandPools.push_back(CommandPool);
+				}
+			}
+			{
+				VkFenceCreateInfo CreateInfo;
+				CreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+				CreateInfo.pNext = nullptr;
+				CreateInfo.flags = 0;
+				vkCreateFence(Device, &CreateInfo, nullptr, &FrameFence);
+			}
+			{
+				VkSemaphoreCreateInfo CreateInfo;
+				CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+				CreateInfo.pNext = nullptr;
+				CreateInfo.flags = 0;
+				vkCreateSemaphore(Device, &CreateInfo, nullptr, &SwapchainSemaphore);
+			}
 		}
-	}
-	bool Ready()
-	{
-		return Swapchain != VK_NULL_HANDLE && GraphicsQueue != VK_NULL_HANDLE;
+
+		Shutdown = Swapchain == VK_NULL_HANDLE || GraphicsQueue == VK_NULL_HANDLE;
 	}
 	bool PumpEvents()
 	{
-		return Ready() && !SDL_QuitRequested();
+		return !(SDL_QuitRequested() || Shutdown);
+		{
+			return false;
+		}
+	}
+	void AdvanceFrame()
+	{
+		if (FAILED(vkAcquireNextImageKHR, Device, Swapchain, UINT64_MAX, SwapchainSemaphore, VK_NULL_HANDLE, &FrameOffset))
+		{
+			Shutdown = true;
+		}
 	}
 	virtual ~VulkanWindow()
 	{
+		if (FrameFence != VK_NULL_HANDLE)
+		{
+			vkWaitForFences(Device, 1, &FrameFence, VK_TRUE, 1e+9);
+			vkDestroyFence(Device, FrameFence, nullptr);
+		}
+		if (SwapchainSemaphore != VK_NULL_HANDLE)
+		{
+			vkDestroySemaphore(Device, SwapchainSemaphore, nullptr);
+		}
+		if (OldCommandBuffers.size())
+		{
+			vkFreeCommandBuffers(Device, LastCommandPool, uint32_t(OldCommandBuffers.size()), OldCommandBuffers.data());
+			OldCommandBuffers.clear();
+		}
+		for (VkCommandPool& CommandPool : CommandPools)
+		{
+			vkDestroyCommandPool(Device, CommandPool, nullptr);
+		}
+		for (VkImageView& SwapchainView : SwapchainViews)
+		{
+			vkDestroyImageView(Device, SwapchainView, nullptr);
+		}
 		if (Swapchain != VK_NULL_HANDLE)
 		{
 			vkDestroySwapchainKHR(Device, Swapchain, nullptr);
@@ -253,6 +328,7 @@ struct VulkanWindow
 		SDL_Quit();
 	}
 
+	bool Shutdown = true;
 	SDL_Window* Window = nullptr;
 	VkInstance Instance = VK_NULL_HANDLE;
 	VkSurfaceKHR Surface = VK_NULL_HANDLE;
@@ -268,4 +344,11 @@ struct VulkanWindow
 	VkSwapchainCreateInfoKHR SwapchainCreateInfo;
 	VkSwapchainKHR Swapchain = VK_NULL_HANDLE;
 	std::vector<VkImage> SwapchainImages;
+	std::vector<VkImageView> SwapchainViews;
+	std::vector<VkCommandPool> CommandPools;
+	VkCommandPool LastCommandPool = VK_NULL_HANDLE;
+	std::vector<VkCommandBuffer> OldCommandBuffers;
+	uint32_t FrameOffset = 0;
+	VkFence FrameFence = VK_NULL_HANDLE;
+	VkSemaphore SwapchainSemaphore = VK_NULL_HANDLE;
 };
