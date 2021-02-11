@@ -27,7 +27,15 @@ def teardown():
 
 def main():
     app = register(cpp.VulkanWindow("Eris is my copilot", 800, 600, True))
+    calls = 0
     while app.PumpEvents():
+        app.AdvanceFrame();
+        if calls == 0:
+            # first call to app.AdvanceFrame() should be safe
+            calls += 1
+        else:
+            # second call to app.AdvanceFrame() should crash for normal vulkan reasons
+            break;
         time.sleep(0.1)
 
 
