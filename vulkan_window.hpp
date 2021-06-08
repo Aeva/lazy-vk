@@ -1,5 +1,5 @@
-#include <SDL.h>
-#include <SDL_vulkan.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_vulkan.h>
 #include <vulkan/vulkan_core.h>
 #include <cstdint>
 #include <iostream>
@@ -184,12 +184,14 @@ struct VulkanWindow
 
 		if (Device != VK_NULL_HANDLE)
 		{
+			VkSurfaceCapabilitiesKHR SurfaceCapabilities;
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Adapter, Surface, &SurfaceCapabilities);
 			vkGetDeviceQueue(Device, uint32_t(QueueFamilyIndex), 0, &GraphicsQueue);
 			SwapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 			SwapchainCreateInfo.pNext = nullptr;
 			SwapchainCreateInfo.flags = 0;
 			SwapchainCreateInfo.surface = Surface;
-			SwapchainCreateInfo.minImageCount = 2;
+			SwapchainCreateInfo.minImageCount = fmax(2, SurfaceCapabilities.minImageCount);
 			SwapchainCreateInfo.imageFormat = SurfaceFormat.format;
 			SwapchainCreateInfo.imageColorSpace = SurfaceFormat.colorSpace;
 			SwapchainCreateInfo.imageExtent.width = Width;
